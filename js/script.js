@@ -23,7 +23,7 @@ function highlightCurrentMenu() {
 function init() {
   switch (app.currentPage) {
     case '/':
-    case 'index.html':
+    case '/index.html':
       console.log('Home');
       getPopularMovies();
       break;
@@ -96,7 +96,9 @@ function setPopularMovie(movie, popularMoviesContainer) {
     [
       {
         name: 'src',
-        value: './images/no-image.jpg',
+        value: movie.poster_path
+          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+          : './images/no-image.jpg',
       },
       {
         name: 'alt',
