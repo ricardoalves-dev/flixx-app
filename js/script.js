@@ -25,6 +25,7 @@ function init() {
     case '/':
     case '/index.html':
       console.log('Home');
+
       getPopularMovies();
       break;
 
@@ -67,75 +68,83 @@ async function get(endpoint) {
   return resp.json();
 }
 
-// GET POPULAR MOVIES
+// CARDS
+async function getCards(url) {
+  const response = await get(url);
+  const data = response.results;
+  const cardArray = [];
+  data.forEach((dataElement) => cardArray.push(getCard(dataElement)));
+
+  return cardArray;
+}
+
+function getCard(dataElement) {
+  const card = document.createElement('div');
+  card.classList.add('card');
+  card.appendChild(getCardLink(dataElement));
+  card.appendChild(getCardBody(dataElement));
+
+  return card;
+}
+
+function getCardLink(dataElement) {
+  const link = document.createElement('a');
+  link.setAttribute('href', `./movie-details.html?id=${dataElement.id}`);
+  link.appendChild(getCardImage(dataElement));
+
+  return link;
+}
+
+function getCardImage(dataElement) {
+  const image = document.createElement('img');
+  image.classList.add('card-img-top');
+  image.setAttribute(
+    'src',
+    dataElement.poster_path
+      ? `https://image.tmdb.org/t/p/w500${dataElement.poster_path}`
+      : './images/no-image.jpg'
+  );
+
+  return image;
+}
+
+function getCardBody(dataElement) {
+  const cardBody = document.createElement('div');
+  cardBody.classList.add('card-body');
+  cardBody.appendChild(getCardTitle(dataElement));
+  cardBody.appendChild(getCardText(dataElement));
+
+  return cardBody;
+}
+
+function getCardTitle(dataElement) {
+  const cardTitle = document.createElement('h5');
+  cardTitle.classList.add('card-title');
+  cardTitle.innerText = dataElement.title;
+
+  return cardTitle;
+}
+
+function getCardText(dataElement) {
+  const cardText = document.createElement('p');
+  cardText.classList.add('card-text');
+
+  const text = document.createElement('small');
+  text.classList.add('text-muted');
+  text.innerText = `Release: ${dataElement.release_date}`;
+
+  cardText.appendChild(text);
+
+  return cardText;
+}
+
+// POPULAR MOVIES
 async function getPopularMovies() {
-  const data = await get(api.paths.popularMovies);
-  const movies = data.results;
-  console.log(movies);
-  const popularMoviesContainer = document.querySelector('#popular-movies');
-  popularMoviesContainer.innerHTML = '';
+  const popularMovies = document.querySelector('#popular-movies');
+  popularMovies.innerHTML = '';
 
-  movies.forEach((movie) => setPopularMovie(movie, popularMoviesContainer));
-}
-
-function setPopularMovie(movie, popularMoviesContainer) {
-  const card = createElement('div', ['card']);
-  const link = createElement(
-    'a',
-    [],
-    [
-      {
-        name: 'href',
-        value: `./movie-details.html?id=${movie.id}`,
-      },
-    ]
-  );
-  const image = createElement(
-    'img',
-    ['card-img-top'],
-    [
-      {
-        name: 'src',
-        value: movie.poster_path
-          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-          : './images/no-image.jpg',
-      },
-      {
-        name: 'alt',
-        value: 'Movie Title',
-      },
-    ]
-  );
-
-  const cardBody = createElement('div', ['card-body']);
-  const cardTitle = createElement('h5', ['card-title']);
-  cardTitle.innerText = movie.title;
-
-  const cardText = createElement('p', ['card-text']);
-  const textMuted = createElement('small', ['text-muted']);
-  textMuted.innerText = `Release: ${movie.release_date}`;
-
-  card.appendChild(link);
-  link.appendChild(image);
-  card.appendChild(cardBody);
-  cardBody.appendChild(cardTitle);
-  cardBody.appendChild(cardText);
-  cardText.appendChild(textMuted);
-  popularMoviesContainer.appendChild(card);
-}
-
-function createElement(tag, classes, attributes) {
-  const element = document.createElement(tag);
-
-  if (classes !== undefined) {
-    classes.forEach((c) => element.classList.add(c));
-  }
-
-  if (attributes !== undefined) {
-    attributes.forEach((a) => element.setAttribute(a.name, a.value));
-  }
-
-  return element;
+  const popularMoviesCards = await getCards(api.paths.popularMovies);
+  popularMoviesCards.forEach((card) => popularMovies.appendChild(card));
 }
 
 document.addEventListener('DOMContentLoaded', init);
