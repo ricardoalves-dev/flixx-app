@@ -52,6 +52,11 @@ function init() {
   highlightCurrentMenu();
 }
 
+function toggleSpinner() {
+  const spinner = document.querySelector('.spinner');
+  spinner.classList.toggle('show');
+}
+
 // GET CABEÇALHO
 function getHeader() {
   return {
@@ -62,13 +67,18 @@ function getHeader() {
 
 // GET GENERICO
 async function get(endpoint) {
-  const resp = await fetch(api.url + endpoint, {
-    method: 'GET',
-    headers: getHeader(),
-  });
+  toggleSpinner();
+  try {
+    const resp = await fetch(api.url + endpoint, {
+      method: 'GET',
+      headers: getHeader(),
+    });
 
-  console.log(resp.json);
-  return resp.json();
+    console.log(resp.json);
+    return resp.json();
+  } finally {
+    toggleSpinner();
+  }
 }
 
 // CARDS
