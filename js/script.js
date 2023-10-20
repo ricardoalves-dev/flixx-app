@@ -8,6 +8,7 @@ const api = {
     'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0ZjFjZTQyN2Y0MjZkNGY2ZDdlZDY1M2M1ODc5NDI2NCIsInN1YiI6IjY1MjBhNGRjYzUwYWQyMDEyYzFjOTVlOSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.B_rwN6U7ofnmC2y2VeZqJzeo_LJN60H-1xNElbd8Czk',
   paths: {
     popularMovies: '/movie/popular',
+    popularTvShows: '/tv/popular',
   },
 };
 
@@ -21,12 +22,13 @@ function highlightCurrentMenu() {
 
 // ROUTER
 function init() {
+  console.log(app.currentPage);
   switch (app.currentPage) {
     case '/':
     case '/index.html':
       console.log('Home');
 
-      getPopularMovies();
+      getPopular(api.paths.popularMovies);
       break;
 
     case 'movie-details.html':
@@ -37,8 +39,9 @@ function init() {
       console.log('Search');
       break;
 
-    case 'shows.html':
+    case '/shows.html':
       console.log('Shows');
+      getPopular(api.paths.popularTvShows);
       break;
 
     case 'tv-details.html':
@@ -72,6 +75,7 @@ async function get(endpoint) {
 async function getCards(url) {
   const response = await get(url);
   const data = response.results;
+  console.log(data);
   const cardArray = [];
   data.forEach((dataElement) => cardArray.push(getCard(dataElement)));
 
@@ -120,7 +124,9 @@ function getCardBody(dataElement) {
 function getCardTitle(dataElement) {
   const cardTitle = document.createElement('h5');
   cardTitle.classList.add('card-title');
-  cardTitle.innerText = dataElement.title;
+  cardTitle.innerText = dataElement.title
+    ? dataElement.title
+    : dataElement.name;
 
   return cardTitle;
 }
@@ -131,20 +137,25 @@ function getCardText(dataElement) {
 
   const text = document.createElement('small');
   text.classList.add('text-muted');
-  text.innerText = `Release: ${dataElement.release_date}`;
+  text.innerText = dataElement.release_date
+    ? `Release: ${dataElement.release_date}`
+    : `Aired: ${dataElement.first_air_date}`;
 
   cardText.appendChild(text);
 
   return cardText;
 }
 
-// POPULAR MOVIES
-async function getPopularMovies() {
-  const popularMovies = document.querySelector('#popular-movies');
-  popularMovies.innerHTML = '';
+async function getPopular(endPoint) {
+  console.log(endPoint);
+  const popularContentContainer =
+    endPoint === api.paths.popularMovies
+      ? document.querySelector('#popular-movies')
+      : document.querySelector('#popular-shows');
+  popularContentContainer.innerHTML = '';
 
-  const popularMoviesCards = await getCards(api.paths.popularMovies);
-  popularMoviesCards.forEach((card) => popularMovies.appendChild(card));
+  const popularCards = await getCards(endPoint);
+  popularCards.forEach((card) => popularContentContainer.appendChild(card));
 }
 
 document.addEventListener('DOMContentLoaded', init);
