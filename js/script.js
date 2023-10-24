@@ -9,6 +9,7 @@ const api = {
   paths: {
     popularMovies: '/movie/popular',
     popularTvShows: '/tv/popular',
+    movieDetails: '/movie/{id}',
   },
 };
 
@@ -31,8 +32,9 @@ function init() {
       getPopular(api.paths.popularMovies);
       break;
 
-    case 'movie-details.html':
+    case '/movie-details.html':
       console.log('Movie Details');
+      getMovieDetails(api.paths.movieDetails);
       break;
 
     case 'search.html':
@@ -76,7 +78,8 @@ async function get(endpoint) {
 
     console.log(resp.json);
     return resp.json();
-  } finally {
+  } 
+  finally {
     toggleSpinner();
   }
 }
@@ -166,6 +169,156 @@ async function getPopular(endPoint) {
 
   const popularCards = await getCards(endPoint);
   popularCards.forEach((card) => popularContentContainer.appendChild(card));
+}
+
+function getMovieId(){
+  const searchParams = new URLSearchParams(window.location.search);
+  return searchParams.get('id');  
+}
+
+async function getMovieDetails(endPoint){
+  const movieDetails = document.querySelector('#movie-details');
+  const data = await get(endPoint.replace('{id}', getMovieId()));
+  movieDetails.innerHTML = '';
+  movieDetails.appendChild(getDetailsTop(data));
+  movieDetails.appendChild(getMoviesDetailsBottom(data));
+}
+
+function getDetailsTop(data){
+  const detailsTop = document.createElement('div');
+  detailsTop.classList.add('details-top');
+
+  detailsTop.appendChild(getDetailsImage(data));
+  const div = document.createElement('div');
+  div.appendChild(getDetailsTitle(data));
+  div.appendChild(getDetailsRating(data));
+  div.appendChild(getDetailsReleaseDate(data));
+  div.appendChild(getDetailsOverview(data));
+
+  const genresTitle = document.createElement('h5');
+  genresTitle.innerText = 'Genres';
+  div.appendChild(genresTitle);
+  
+  div.appendChild(getDetailsGenres(data));
+  div.appendChild(getDetailsHomePage(data));
+
+  detailsTop.appendChild(div);
+
+  return detailsTop;
+}
+
+function getDetailsImage(data){
+  const div = document.createElement('div');
+  const image = document.createElement('img');
+  image.classList.add('card-img-top');
+  image.setAttribute('alt', 'Title');
+  image.setAttribute('src', data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : './images/no-image.jpg');
+
+  div.appendChild(image);
+  return div;
+}
+
+function getDetailsTitle(data){
+  const title = document.createElement('h2');
+  title.innerText = data.original_title;
+  
+  return title;
+}
+
+function getDetailsRating(data){
+  const rating = document.createElement('p');
+  const ratingStar = document.createElement('i');
+  ratingStar.classList = 'fas fa-star text-primary';
+  rating.innerText = (data.vote_average.toFixed(1));
+  rating.appendChild(ratingStar);
+
+  return rating;
+}
+
+function getDetailsReleaseDate(data){
+  const releaseDate = document.createElement('p');
+  releaseDate.classList.add('text-muted');
+  releaseDate.innerText = `Release Date: ${data.release_date}`;
+
+  return releaseDate;
+}
+
+function getDetailsOverview(data){
+  const overview = document.createElement('p');
+  overview.innerText = data.overview;
+
+  return overview;
+}
+
+function getDetailsGenres(data){
+  const genresList = document.createElement('ul');
+  genresList.classList.add('list-group');
+  data.genres.forEach(g => {
+    const genre = document.createElement('li');
+    genre.innerText = g.name;
+    genresList.appendChild(genre);
+  });
+
+  return genresList;
+}
+
+function getDetailsHomePage(data){
+  const link = document.createElement('a');
+  link.classList.add('btn');
+  link.setAttribute('target', '_blank');
+  link.setAttribute('href', data.homepage);
+  link.innerText = 'Visit Homepage';
+
+  return link;  
+}
+
+function getMoviesDetailsBottom(data){
+  const detailsBottom = document.createElement('div');
+  detailsBottom.classList.add('details-bottom');
+
+  const movieInfo = document.createElement('h2');
+  movieInfo.innerText = 'Movie Info';
+
+  detailsBottom.appendChild(movieInfo);
+  detailsBottom.appendChild(getMovieInfo(data));
+
+  const companies = document.createElement('h4');
+  companies.innerText = 'Production Companies';
+  detailsBottom.appendChild(companies);
+  detailsBottom.appendChild(getProductionCompanies(data.production_companies));
+
+  return detailsBottom;
+}
+
+function getMovieInfo(data){
+  const movieInfoList = document.createElement('ul');
+  movieInfoList.appendChild(getInfo('Budget: ', `${new Intl.NumberFormat('en-US', {style: 'currency', currency:'USD'}).format(data.budget)}`));
+  movieInfoList.appendChild(getInfo('Revenue: ', `${new Intl.NumberFormat('en-US', {style: 'currency', currency:'USD'}).format(data.revenue)}`));
+  movieInfoList.appendChild(getInfo('Runtime: ', `${data.runtime} minutes`));
+  movieInfoList.appendChild(getInfo('Status: ', data.status));
+
+  return movieInfoList;
+}
+
+function getInfo(name, value){
+  const info = document.createElement('li');
+  const span = document.createElement('span');
+  span.classList.add('text-secondary');
+  span.innerText = name;
+  info.appendChild(span);
+  info.appendChild(document.createTextNode(value));
+
+  return info;
+}
+
+function getProductionCompanies(data){
+  const companies = document.createElement('div');
+  companies.classList.add('list-group');
+  for (let index = 0; index < data.length; index++) {
+    companies.innerText = index === 0 ? data[index].name : companies.innerText + ', ' + data[index].name;   
+  }
+
+  return companies;
 }
 
 document.addEventListener('DOMContentLoaded', init);
