@@ -10,6 +10,7 @@ const api = {
     popularMovies: '/movie/popular',
     popularTvShows: '/tv/popular',
     movieDetails: '/movie/{id}',
+    tvDetails: '/tv/{id}',
   },
 };
 
@@ -46,8 +47,9 @@ function init() {
       getPopular(api.paths.popularTvShows);
       break;
 
-    case 'tv-details.html':
+    case '/tv-details.html':
       console.log('TV Details');
+      getTvShowsDetails(api.paths.tvDetails);
       break;
   }
 
@@ -76,7 +78,7 @@ async function get(endpoint) {
       headers: getHeader(),
     });
 
-    console.log(resp.json);
+    console.log(resp);
     return resp.json();
   } 
   finally {
@@ -85,8 +87,8 @@ async function get(endpoint) {
 }
 
 // CARDS
-async function getCards(url) {
-  const response = await get(url);
+async function getCards(endPoint) {
+  const response = await get(endPoint);
   const data = response.results;
   console.log(data);
   const cardArray = [];
@@ -106,7 +108,7 @@ function getCard(dataElement) {
 
 function getCardLink(dataElement) {
   const link = document.createElement('a');
-  link.setAttribute('href', `./movie-details.html?id=${dataElement.id}`);
+  link.setAttribute('href', window.location.pathname === '/shows.html' ? `./tv-details.html?id=${dataElement.id}` : `./movie-details.html?id=${dataElement.id}`);
   link.appendChild(getCardImage(dataElement));
 
   return link;
@@ -171,17 +173,26 @@ async function getPopular(endPoint) {
   popularCards.forEach((card) => popularContentContainer.appendChild(card));
 }
 
-function getMovieId(){
+function getId(){
   const searchParams = new URLSearchParams(window.location.search);
   return searchParams.get('id');  
 }
 
 async function getMovieDetails(endPoint){
   const movieDetails = document.querySelector('#movie-details');
-  const data = await get(endPoint.replace('{id}', getMovieId()));
+  const data = await get(endPoint.replace('{id}', getId()));
   movieDetails.innerHTML = '';
   movieDetails.appendChild(getDetailsTop(data));
   movieDetails.appendChild(getMoviesDetailsBottom(data));
+}
+
+async function getTvShowsDetails(endPoint){
+  const tvShowDetails = document.querySelector('#show-details');
+  const data = await get(endPoint.replace('{id}', getId()));
+  console.log(data);
+  tvShowDetails.innerHTML = '';
+  tvShowDetails.appendChild(getDetailsTop(data));
+  tvShowDetails.appendChild(getTvShowDetailsBottom(data));
 }
 
 function getDetailsTop(data){
@@ -220,7 +231,7 @@ function getDetailsImage(data){
 
 function getDetailsTitle(data){
   const title = document.createElement('h2');
-  title.innerText = data.original_title;
+  title.innerText = data.original_title ? data.original_title : data.name;
   
   return title;
 }
@@ -238,7 +249,9 @@ function getDetailsRating(data){
 function getDetailsReleaseDate(data){
   const releaseDate = document.createElement('p');
   releaseDate.classList.add('text-muted');
-  releaseDate.innerText = `Release Date: ${data.release_date}`;
+  releaseDate.innerText = data.release_date
+    ? `Release: ${data.release_date}`
+    : `Aired: ${data.first_air_date}`;
 
   return releaseDate;
 }
@@ -319,6 +332,33 @@ function getProductionCompanies(data){
   }
 
   return companies;
+}
+
+function getTvShowDetailsBottom(data){
+  const detailsBottom = document.createElement('div');
+  detailsBottom.classList.add('details-bottom');
+
+  const showInfo = document.createElement('h2');
+  showInfo.innerText = 'Show Info';
+
+  detailsBottom.appendChild(showInfo);
+  detailsBottom.appendChild(getShowInfo(data));
+
+  const companies = document.createElement('h4');
+  companies.innerText = 'Production Companies';
+  detailsBottom.appendChild(companies);
+  detailsBottom.appendChild(getProductionCompanies(data.production_companies));
+
+  return detailsBottom;
+}
+
+function getShowInfo(data){
+  const infoList = document.createElement('ul');
+  infoList.appendChild(getInfo('Number Of Episodes: ', data.number_of_episodes));
+  infoList.appendChild(getInfo('Last Episode To Air: ', data.last_episode_to_air.name));
+  infoList.appendChild(getInfo('Status: ', data.status));
+
+  return infoList;
 }
 
 document.addEventListener('DOMContentLoaded', init);
