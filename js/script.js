@@ -38,7 +38,8 @@ function init() {
       break;
 
     case '/search.html':
-      search();
+      search(1);
+      setNavigationEvent();
       break;
 
     case '/shows.html':
@@ -51,6 +52,13 @@ function init() {
   }
 
   highlightCurrentMenu();
+}
+
+function setNavigationEvent() {
+  const pagination = document.querySelector('.pagination');
+  pagination.childNodes.forEach((btn) =>
+    btn.addEventListener('click', navigate)
+  );
 }
 
 function toggleSpinner() {
@@ -449,7 +457,7 @@ function initSwiper() {
   });
 }
 
-async function search() {
+async function search(page) {
   const queryParams = new URLSearchParams(window.location.search);
   const searchResults = document.querySelector('#search-results');
   searchResults.innerHTML = '';
@@ -457,10 +465,34 @@ async function search() {
     `${api.paths.search.replace(
       '{type}',
       queryParams.get('type')
-    )}?query=${queryParams.get('search-term')}`
+    )}?query=${queryParams.get('search-term')}&page=${page}`
   );
 
+  setNavigationInfo(data.page, data.total_pages);
   data.results.forEach((result) => searchResults.appendChild(getCard(result)));
+}
+
+function setNavigationInfo(page, totalPages) {
+  const pagination = document.querySelector('#pagination');
+  pagination.dataset.page = page;
+  pagination.dataset.totalPages = totalPages;
+
+  document.querySelector(
+    '.page-counter'
+  ).innerText = `Page ${page} of ${totalPages}`;
+}
+
+function navigate(e) {
+  const pagination = document.querySelector('#pagination');
+
+  if (
+    (e.target.id = 'next') &&
+    parseInt(pagination.dataset.page) < parseInt(pagination.dataset.totalPages)
+  ) {
+    search(parseInt(pagination.dataset.page) + 1);
+  } else if ((e.target.id = 'prev') && parseInt(pagination.dataset.page) > 1) {
+    search(parseInt(pagination.dataset.page) - 1);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
